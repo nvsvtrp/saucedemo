@@ -16,7 +16,12 @@ describe("Sauce Demo Web-Site. Products Page Tests.", () => {
   });
 
   afterEach("Log out", async () => {
-    await pageManager.productsPage.resetAndLogoutViaButton();
+    const logoutButtonSelector = "#react-burger-menu-btn";
+    const isLogoutButtonExisting = await browser.$(logoutButtonSelector).isExisting();
+    if (isLogoutButtonExisting) {
+      await pageManager.productsPage.resetAndLogoutViaButton();
+    }
+
   });
 
   it("Add 'Sauce Labs Backpack' to cart. Delete 'Sauce Labs Backpack'", async () => {
@@ -50,15 +55,15 @@ describe("Sauce Demo Web-Site. Products Page Tests.", () => {
     await expect(itemName).toContain("Test.allTheThings() T-Shirt (Red)");
   });
 
-  it("Check sort by price(low to high)", async ()=> {
+  it("Check sort by price(low to high)", async () => {
     const fromLowToHigh = pageManager.productsPage.buttons.sortContainer;
     await pageManager.productsPage.buttons.sortContainer.click();
-    await fromLowToHigh.selectByAttribute('value', 'lohi'); 
+    await fromLowToHigh.selectByAttribute("value", "lohi");
     const firstItem = await pageManager.productsPage.labels.inventoryItem;
     const itemName = await firstItem.$(".pricebar").getText();
     const minPrice = await getMinPrice();
     await expect(itemName).toContain(minPrice);
-    })
+  });
 
   it("Check sort by price(high to low)", async () => {
     const fromLowToHigh = pageManager.productsPage.buttons.sortContainer;
@@ -73,9 +78,21 @@ describe("Sauce Demo Web-Site. Products Page Tests.", () => {
   it("should find the highest price among the inventory items", async () => {
     await pageManager.productsPage.items.backpackItemName.click();
     const currentUrl = await browser.getUrl();
-    expect(currentUrl).toBe('https://www.saucedemo.com/inventory-item.html?id=4');  
-  }); //есть маленький вопрос. Там по сути все товары перемешаны. Проверку целесообразнее запустить в одном тесте (все 6 элементов)
-// или лучше в 6 разных тестов 
+    expect(currentUrl).toBe(
+      "https://www.saucedemo.com/inventory-item.html?id=4"
+    );
+  });
+
+  it("Response test", async()=> {
+    await pageManager.productsPage.buttons.burgerMenu.click();
+    await pageManager.productsPage.buttons.burgerAbout.click();
+    const statusCode = await browser.executeAsync((done) => {
+        fetch('https://saucelabs.com/')
+            .then(response => done(response.status))
+            .catch(error => done(error));
+    });
+    expect(statusCode).toEqual(200);
+  })
 
   async function getMaxPrice() {
     const priceElements = await $$(".inventory_item_price");
